@@ -1,5 +1,4 @@
 import $ from 'jquery'
-import isPrime from '../utils/isPrime'
 import radColor, { getRandomNumber } from '../utils/radColor'
 
 const divContainer = $('#divContainer')
