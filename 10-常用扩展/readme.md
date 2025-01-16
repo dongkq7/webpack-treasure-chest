@@ -184,7 +184,28 @@ module.exports = {
 该插件构造函数中接收一个个配置规则，告诉插件将那个目录下的静态资源(from)拷贝出来放到哪里(to)。
 
 - 需要注意to属性是相对于dist目录的，如果静态资源直接放在dist下，to配置成`./`即可
-- 这个插件对重复的静态资源进行了判断，如果使用了html-webpack-plugin生成了页面，同时静态资源目录下又存在html，是不会进行重复拷贝的。
+
+  我们会遇到这种情况，如果dist目录下生成了某个html，同时复制静态资源中也包含同名的html并都输出在同一目录下，会报错：
+
+  ![img](https://cdn.nlark.com/yuque/0/2025/png/22253064/1736931794809-35d44097-003e-4bef-8c96-0c00c2605af2.png)
+
+  ![img](https://cdn.nlark.com/yuque/0/2025/png/22253064/1736931802276-ebecd6be-ef00-4ffa-ace6-8582d47a952a.png)
+
+  此时可以通过globOptions.ignore配置项去忽略某些文件的拷贝
+
+  ```javascript
+  new CopyWebpackPlugin({
+    patterns: [
+      {
+        from: './public',
+        to: './',
+        globOptions: {
+          ignore: ['**/list.html', '**/detail.html']
+        }
+      }
+    ],
+  })
+  ```
 
 ## 4、开发服务器
 

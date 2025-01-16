@@ -1,0 +1,1 @@
+{"version":3,"sources":["source.pcss"],"names":[],"mappings":"AAAA;EACE,sBAAsB;AACxB;;AAEA;EACE,mBAAmB;AACrB;;AAEA;EACE,WAAyB;AAC3B","file":"out.css","sourcesContent":["body {\n  background-color: #333;\n}\n\n:root {\n  --dangerColor: #f40;\n}\n\n.danger {\n  color: var(--dangerColor);\n}\n"]}
