@@ -45,7 +45,20 @@ node内置模块 - path: https://nodejs.org/dist/latest-v12.x/docs/api/path.html
   },
 ```
 
-这里achunk只是从多个入口来分析模块依赖，最终将这些模块还是合并到一个chunk里。
+这里a chunk只是从多个入口来分析模块依赖，最终将这些模块还是合并到一个chunk里。
+
+需要注意，直接写成数组的方式也是将多个入口中的内容合并到一个chunk中：
+
+```javascript
+entry: ["./src/index.js", "./src/a.js"],
+output: {
+  path: path.resolve(__dirname, "target"),
+  filename: "[name][fullhash:8].js",
+  clean: true,
+}
+```
+
+![img](https://cdn.nlark.com/yuque/0/2025/png/22253064/1749180077314-18c89b81-81d9-470d-a1e5-28d5f987b4ff.png)
 
 ## 出口
 
@@ -101,6 +114,7 @@ module.exports = {
 - name：chunkname
 - fullhash: 总的资源hash，通常用于解决缓存问题
 - chunkhash: 使用chunkhash，这里hash值的变化只与chunk中的内容是否变化有关
+- contenthash: 也是关于chunk的hash，只不过只包括该内容类型的元素（受 `optimization.realContentHash` 影响）
 - id: 使用chunkid，不推荐，开发环境id为chunkname，但是生产环境是一个数字，开发环境与生产环境不一致
 
 ```javascript
@@ -130,6 +144,12 @@ module.exports = {
 ```
 
 ![img](https://cdn.nlark.com/yuque/0/2025/png/22253064/1736679212415-dec97ea9-e323-44d5-9e37-125cd1176883.png)
+
+### clean
+
+webpack5后增加了`clean: true`，该配置项可以在打包时清除上一次生成的资源列表。
+
+在webpack5以前，要通过`clean-webpack-plugin`插件来实现。
 
 ## 入口出口最佳实践
 
@@ -243,7 +263,7 @@ webpack配置
 module.exports = {
     entry: "./src/index.js",
     output:{
-        filename:"index.[hash:5].js"
+        filename:"index.[fullhash:5].js"
     }
 }
 ```
@@ -265,3 +285,29 @@ module.exports = {
 
 - node中的一个函数，将多段路径拼接成一个绝对路径，对不同操作系统会兼容处理，比如windows和mac的路径斜杠是不同的，这里也是可以正确处理的
 - `path.resolve("./", "abc", "123")`,这里的`./`指的是node运行所在的目录，如果想拼接当前js所在目录那么是有`__dirname`
+
+
+
+## [补充]如果使用esmodule的方式
+
+package.json中指明了`type:module`使用esmodule的方式来进行书写：
+
+```javascript
+import path from "node:path";
+export default {
+  mode: "development",
+  entry: {
+    main: "./src/index.js", // 属性名 chunk名称，属性值chunk对应的入口模块路径
+    a: "./src/a.js",
+  },
+  // entry: ["./src/index.js", "./src/a.js"],
+  output: {
+    path: path.resolve(import.meta.dirname, "target"),
+    filename: "[name][fullhash:8].js",
+    clean: true,
+  },
+};
+```
+
+- import path时通过`import path from 'path'`或者`import path from 'node:path'`
+- `__dirname`改成`**import.meta.dirname**`
