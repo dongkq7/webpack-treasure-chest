@@ -1,4 +1,4 @@
-## context
+## 一、context
 
 ```javascript
 context: path.resolve(__dirname, "src")
@@ -24,9 +24,9 @@ module.exports = {
 
 配置的context也会影响loaders配置中的路径
 
-## output
+## 二、output
 
-### library
+### 1、library
 
 ```javascript
 library: "abc"
@@ -77,7 +77,7 @@ module.exports = {
 
 </script>
 
-### libraryTarget
+### 2、libraryTarget
 
 ```javascript
 libraryTarget: "var"
@@ -105,7 +105,7 @@ libraryTarget: "var"
 - commonjs：暴露给exports的一个属性
 - 其他：https://www.webpackjs.com/configuration/output/#output-librarytarget
 
-## target
+## 三、target
 
 ```javascript
 target:"web" //默认值
@@ -125,7 +125,7 @@ target:"web" //默认值
 
 ![img](https://cdn.nlark.com/yuque/0/2025/png/22253064/1736825047731-2d67995b-4a7a-4c40-87d3-fbe2cbc134f7.png)
 
-## module.noParse
+## 四、module.noParse
 
 ```javascript
  module: {
@@ -149,11 +149,52 @@ target:"web" //默认值
 
 这里的配置只是会影响webpack打包的性能，不会影响代码运行的性能。如果不在意那可以忽略。
 
-## resolve
+## 五、resolve
 
-resolve的相关配置主要用于控制模块解析过程。
+resolve的相关配置主要用于控制模块解析过程。 
 
-### modules
+在开发中我们会有各种各样的模块依赖，这些模块可能来自于自己编写的代码，也可能来自第三方库
+
+resolve可以帮助webpack从每个 require/import 语句中，找到需要引入到合适的模块代码
+
+webpack底层使用了 [enhanced-resolve](https://github.com/webpack/enhanced-resolve) 来解析文件路径
+
+**webpack能解析三种文件路径：** 
+
+1. **绝对路径** 
+
+ 由于已经获得文件的绝对路径，因此不需要再做进一步解析。 
+
+1. **相对路径** 
+
+ 在这种情况下，使用 import 或 require 的资源文件所处的目录，被认为是上下文目录； 
+
+ 在 import/require 中给定的相对路径，会拼接此上下文路径，来生成模块的绝对路径； 
+
+1. **模块路径** 
+
+ 在 resolve.modules中指定的所有目录检索模块
+
+- 默认值是 ['node_modules']，所以默认会从node_modules中查找文件
+- 可以通过设置别名的方式来替换初识模块路径（通过`resolve.alias`进行设置）
+
+### 确定该路径是一个文件还是文件夹
+
+在此过程中会确定该路径是一个文件还是文件夹：
+
+1. 如果是一个文件
+
+- 如果文件具有扩展名，则直接打包文件
+- 否则，将使用 `**resolve.extensions**`选项作为文件扩展名解析
+
+1. 如果是一个文件夹： 
+
+ 会在文件夹中根据` **resolve.mainFiles**`配置选项中指定的文件顺序查找
+
+- resolve.mainFiles的默认值是 ['index']
+- 再根据 resolve.extensions来解析扩展名
+
+### 1、modules
 
 如果某个模块依赖了另一个模块，当使用webpack打包时，webpack会根据抽象语法树分析模块的依赖，遇到require(...)，默认情况下会按照node的查找规则去查找。**（注意，打包时，依赖是webpack去查找的，而不是node，因为打包不是去运行代码，而是webpack根据抽象语法树去分析依赖，然后去查找依赖）**
 
@@ -173,13 +214,13 @@ if (Math.random() < 0.5) {
 modules: ["node_modules"]  //默认值，该数组表示模块的查找位置
 ```
 
-当解析模块时，如果遇到导入语句，```require("test")```，webpack会从下面的位置寻找依赖的模块
+当解析模块时，如果遇到导入语句，`require("test")`，webpack会从下面的位置寻找依赖的模块
 
-1. 当前目录下的```node_modules```目录
-2. 上级目录下的```node_modules```目录
+1. 当前目录下的`node_modules`目录
+2. 上级目录下的`node_modules`目录
 3. ...
 
-### extensions
+### 2、extensions
 
 ```javascript
 extensions: [".js", ".json", '.vue', '.css', '.jsx']  // 默认值:extensions['.js', '.json']
@@ -190,7 +231,7 @@ extensions: [".js", ".json", '.vue', '.css', '.jsx']  // 默认值:extensions['.
 - test.js
 - test.json
 
-### alias
+### 3、alias
 
 ```javascript
 alias: {
@@ -199,11 +240,11 @@ alias: {
 }
 ```
 
-有了alias（别名）后，导入语句中可以加入配置的键名，例如```require("@/abc.js")```，webpack会将其看作是```require(src的绝对路径+"/abc.js")```。
+有了alias（别名）后，导入语句中可以加入配置的键名，例如`require("@/abc.js")`，webpack会将其看作是`require(src的绝对路径+"/abc.js")`。
 
-在大型系统中，源码结构往往比较深和复杂，别名配置可以让我们更加方便的导入依赖
+在大型系统中，源码结构往往比较深和复杂，别名配置可以让我们更加方便的导入依赖。
 
-## externals
+## 六、externals
 
 ```javascript
 externals: {
@@ -293,15 +334,15 @@ var _ = require('lodash')
 console.log(_)
 ```
 
-## stats
+## 七、stats
 
 stats控制的是构建过程中控制台的输出内容，比如：
 
 ```javascript
 stats: {
-    colors: true, // 显示显色
-    modules: false // 不显示构建的模块详细信息
-  }
+  colors: true, // 显示显色
+  modules: false // 不显示构建的模块详细信息
+}
 ```
 
 更多配置，查看：https://www.webpackjs.com/configuration/stats/#stats

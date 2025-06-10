@@ -16,6 +16,7 @@
 import path from "node:path";
 export default {
   mode: "development",
+  // context: path.resolve(import.meta.dirname, "./"),
   entry: {
     main: "./src/index.js", // 属性名 chunk名称，属性值chunk对应的入口模块路径
     // a: "./src/a.js",

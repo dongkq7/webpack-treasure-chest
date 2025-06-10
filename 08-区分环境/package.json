@@ -3,14 +3,15 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "build": "webpack --env prod",
-    "dev": "webpack --env dev"
+    "build": "webpack --config webpack.prod.js",
+    "dev": "webpack --config webpack.dev.js"
   },
   "author": "",
   "license": "ISC",
   "description": "",
   "devDependencies": {
     "webpack": "^5.97.1",
-    "webpack-cli": "^6.0.1"
+    "webpack-cli": "^6.0.1",
+    "webpack-merge": "^6.0.1"
   }
 }

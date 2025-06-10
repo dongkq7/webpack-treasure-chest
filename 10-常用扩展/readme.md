@@ -1,4 +1,4 @@
-##  1、清除输出目录
+##  1、清除输出目录-CleanWebpackPlugin
 
 一般bundle的文件名称会加上hash，如果文件内容变更的话，hash也会变化，但是此时原来的文件依旧会保留在打包目录中，还得手动删除比较麻烦。
 
@@ -6,9 +6,11 @@
 
 - 注意，需要正确指出output.path，输出的文件目录
 
-1. 安装插件
+1. 首先进行安装：
 
-npm install --save-dev clean-webpack-plugin
+```bash
+npm i clean-webpack-plugin -D
+```
 
 1. 使用
 
@@ -26,13 +28,31 @@ module.exports = {
 }
 ```
 
-## 2、自动生成页面
+现可以不使用该插件，在`outout`配置项中，通过配置`clean: true`来达到同样的效果
+
+```javascript
+module.exports = {
+  //..
+  output: {
+    //..
+    clean: true
+  }
+}
+```
+
+## 2、自动生成页面-HtmlWebpackPlugin
 
 一般打包后的js需要放在页面中去运行，webpack不会自动生成页面。此时需要插件去生成页面并自动将打包后的js引入。
 
+打包后是需要一个html一同和其他静态资源部署到服务器上的，不然展示啥对吧？
+
+这样的话就需要一个插件来生成一个html文件，我们可以提供一个模板供其参考，然后打包后，插件就会将打包后的js与css一并引入这个html中。
+
 1. 安装插件
 
- npm i --save-dev html-webpack-plugin
+```bash
+npm i html-webpack-plugin -D
+```
 
 1. 使用
 
@@ -56,6 +76,12 @@ module.exports = {
 
 ![img](https://cdn.nlark.com/yuque/0/2025/png/22253064/1736838824221-02bff8d5-d8d8-49c9-b325-3cf44ed36133.png)
 
+### 该插件是如何生成html的呢
+
+在其内部使用了一个default_index.ejs的页面，页面中去读取相关的配置信息进行展示
+
+![img](https://cdn.nlark.com/yuque/0/2025/png/22253064/1749541997573-dd6e0990-f3be-42f5-8094-115412be65d0.png)
+
 ### 该插件常用配置
 
 #### template
@@ -69,6 +95,22 @@ module.exports = {
   //...
   plugins: [
     new HtmlWebpackPlugin({
+      template: './public/index.html'
+    })
+  ]
+}
+```
+
+#### title
+
+用于配置html中的<title>
+
+```javascript
+module.exports = {
+  //...
+  plugins: [
+    new HtmlWebpackPlugin({
+      title: '我是页面title',
       template: './public/index.html'
     })
   ]
@@ -185,27 +227,27 @@ module.exports = {
 
 - 需要注意to属性是相对于dist目录的，如果静态资源直接放在dist下，to配置成`./`即可
 
-  我们会遇到这种情况，如果dist目录下生成了某个html，同时复制静态资源中也包含同名的html并都输出在同一目录下，会报错：
+我们会遇到这种情况，如果dist目录下生成了某个html，同时复制静态资源中也包含同名的html并都输出在同一目录下，会报错：
 
-  ![img](https://cdn.nlark.com/yuque/0/2025/png/22253064/1736931794809-35d44097-003e-4bef-8c96-0c00c2605af2.png)
+![img](https://cdn.nlark.com/yuque/0/2025/png/22253064/1736931794809-35d44097-003e-4bef-8c96-0c00c2605af2.png)
 
-  ![img](https://cdn.nlark.com/yuque/0/2025/png/22253064/1736931802276-ebecd6be-ef00-4ffa-ace6-8582d47a952a.png)
+![img](https://cdn.nlark.com/yuque/0/2025/png/22253064/1736931802276-ebecd6be-ef00-4ffa-ace6-8582d47a952a.png)
 
-  此时可以通过globOptions.ignore配置项去忽略某些文件的拷贝
+此时可以通过globOptions.ignore配置项去忽略某些文件的拷贝
 
-  ```javascript
-  new CopyWebpackPlugin({
-    patterns: [
-      {
-        from: './public',
-        to: './',
-        globOptions: {
-          ignore: ['**/list.html', '**/detail.html']
-        }
+```javascript
+new CopyWebpackPlugin({
+  patterns: [
+    {
+      from: './public',
+      to: './',
+      globOptions: {
+        ignore: ['**/list.html', '**/detail.html']
       }
-    ],
-  })
-  ```
+    }
+  ],
+})
+```
 
 ## 4、开发服务器
 
@@ -226,7 +268,9 @@ module.exports = {
 
 1. 安装
 
-npm install webpack-dev-server --save-dev
+```bash
+npm i webpack-dev-server -D
+```
 
 1. 执行`webpack-dev-server`命令
 
@@ -242,26 +286,42 @@ npm install webpack-dev-server --save-dev
 2. 开启watch
 3. 注册hooks：类似于plugin，webpack-dev-server会向webpack中注册一些钩子函数，主要功能如下：
 
-1. 将资源列表（aseets）保存起来，保存到内存中
+1. 将资源列表（aseets）保存起来，保存到内存中，因为如果输出到磁盘中，还得涉及到文件的读写，显示内容还得读取生成的文件，效率很低。
 2. 禁止webpack输出文件
 
-1. 用express开启一个服务器，监听某个端口，当请求到达后，根据请求的路径，给予相应的资源内容
+1. 用express开启一个服务器，监听某个端口，当请求到达后，根据请求的路径，从内存中读取内容，给予相应的资源内容
 
-**配置**
+### 相关配置
 
 针对webpack-dev-server的配置，参考：https://www.webpackjs.com/configuration/dev-server/
 
 常见配置有：
 
-- **port**：配置监听端口
+#### port
 
+配置监听端口
 
+#### open
 
-- **open**: 是否自动打开浏览器窗口，如果设置为true，启动开发服务器后会自动打开默认浏览器，也可以配置成数组来指定默认打开的页面https://www.webpackjs.com/configuration/dev-server/#devserveropen
+是否自动打开浏览器窗口，如果设置为true，启动开发服务器后会自动打开默认浏览器，也可以配置成数组来指定默认打开的页面https://www.webpackjs.com/configuration/dev-server/#devserveropen
 
+#### host
 
+**默认是localhost，如果想让其他地方也可以访问可以配置成**`**0.0.0.0**`
 
-- **proxy**：配置代理，常用于跨域访问
+**localhost 和 0.0.0.0 的区别：** 
+
+正常的数据库包经常 应用层 - 传输层 - 网络层 - 数据链路层 - 物理层 
+
+而回环地址，是在网络层直接就被获取到了，是不会经常数据链路层和物理层的
+
+比如监听 127.0.0.1时，在同一个网段下的主机中，通过ip地址是不能访问的
+
+而0.0.0.0表示监听IPV4上所有的地址，再根据端口找到不同的应用程序，比如我们监听 0.0.0.0时，在同一个网段下的主机中，通过ip地址是可以访问的
+
+#### proxy
+
+配置代理，常用于跨域访问
 
 前端页面开发完成后往往会与服务端部署在同一域下，不会有跨域问题。**跨域问题往往会出现在开发阶段，开发阶段启动的是开发服务器，与接口地址不在同一域下，所以会产生跨域问题。**
 
@@ -286,9 +346,15 @@ devServer: {
 
 此时就需要加上`changeOrigin: true`来改变请求头中的host和origin
 
+#### compress
 
+是否为静态文件开启gzip compression
 
-- stats：配置控制台输出内容，webpack5中使用的是devMiddleware.stats
+默认是false，可以设置为true，设置为true后接收到的静态资源是gzip压缩后的，浏览器拿到后会进行解压
+
+#### stats
+
+配置控制台输出内容，webpack5中使用的是`**devMiddleware.stats**`
 
 
 
@@ -303,8 +369,6 @@ devServer: {
 **注意**
 
 由于读取配置发生在初始化阶段，所以启动了devserver后修改了相关配置并不会生效，需要重新启动才行。
-
-
 
 ## 5、普通文件处理
 
@@ -410,6 +474,181 @@ npm install url-loader --save-dev
 ```
 
 1. 更多配置https://www.npmjs.com/package/url-loader
+
+### 通过资源模块类型处理
+
+- 在webpack5之前，加载这些资源需要使用一些loader，比如raw-loader 、url-loader、file-loader
+- 在webpack5开始，可以直接使用资源模块类型（**asset module type**），来替代上面的这些loader
+
+#### 资源模块类型(asset module type)
+
+通过添加 4 种新的模块类型，来替换所有这些 loader： 
+
+- **asset/resource** 发送一个单独的文件并导出 URL，之前通过使用 file-loader 实现
+- **asset/inline** 导出一个资源的 data URI，之前通过使用 url-loader 实现
+- **asset** 在导出一个 data URI 和发送一个单独的文件之间自动选择，之前通过使用 url-loader，并且配置资源体积限制实现
+- **asset/source** 导出资源的源代码，之前通过使用 raw-loader 实现（较少使用，因为一般不会自己去对图片的二进制进行解码）
+
+#### 1、type: **asset**
+
+**webpack.img.js:**
+
+```javascript
+const path = require("path");
+module.exports = {
+  entry: "./src/buildImg.js",
+  output: {
+    path: path.resolve(__dirname, "build"),
+    filename: "bundle.js",
+  },
+  module: {
+    rules: [
+      {
+        test: /\.(png|jpe?g|gif)$/,
+        type: "asset",
+      },
+      {
+        test: /\.css$/,
+        use: ["style-loader", "css-loader"],
+      },
+    ],
+  },
+};
+```
+
+**src/buildImg.js:**
+
+```javascript
+import src from "./assets/webpack.png";
+// 将css加入到webpack依赖图中
+import "./css/index.css";
+var img = document.createElement("img");
+img.src = src;
+document.body.append(img);
+
+var div = document.createElement("div");
+document.body.append(div);
+```
+
+**index.html**
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body></body>
+  <script src="./build/bundle.js"></script>
+</html>
+```
+
+执行`pnpm run img`此时在打包结果中可以看到，将这个图片转换成了base64:
+
+![img](https://cdn.nlark.com/yuque/0/2025/png/22253064/1749521410338-301f95f7-a695-467f-99f8-056ef5e96c09.png)
+
+![img](https://cdn.nlark.com/yuque/0/2025/png/22253064/1749521444155-90af9d7b-37a9-4463-ae05-6762235bf042.png)
+
+#### 2、type: **asset/resource**
+
+```javascript
+module.exports = {
+  //...
+  module: {
+    rules: [
+      {
+        test: /\.(png|jpe?g|gif)$/,
+        // type: "asset",
+        type: "asset/resource",
+      },
+      //...
+    ],
+  },
+};
+```
+
+可见，会将资源图片打包输出到目录，然后再将图片对应的资源路径的url给到使用到图片的地方（img的src或者背景图）
+
+![img](https://cdn.nlark.com/yuque/0/2025/png/22253064/1749521546191-b1309dda-a7c2-47e9-822a-a504bfe7f68f.png)
+
+![img](https://cdn.nlark.com/yuque/0/2025/png/22253064/1749521584017-bb247061-dd85-42e6-ad52-baa2d49959a3.png)
+
+#### 3、type: **asset/inline**
+
+会将转成base64
+
+这样的优势：会少发几次网络请求（不需要额外请求图片了）
+
+这样的缺点：js文件会变得很大，造成下载js和解析js时间过长
+
+怎样合理呢？一般会这样处理：
+
+- 对于体积小的图片，可以转换为base64
+- 对于体积大的图片，进行单独打包处理，再去请求打包后对应的资源的url
+
+#### 3、type: **asset 的配置**
+
+经过对type:asset配置，可以达到url-loader配置limit的效果：
+
+```javascript
+module.exports = {
+  //...
+  module: {
+    rules: [
+      {
+        test: /\.(png|jpe?g|gif)$/,
+        type: "asset",
+        parser: {
+          dataUrlCondition: {
+            maxSize: 10 * 1024,
+          },
+        },
+      },
+      //...
+    ],
+  },
+};
+```
+
+#### 配置静态资源的名称
+
+【方式1】在output配置项中通过`**assetModuleFilename**`进行配置，但是这种只适合只有一个静态资源的情况
+
+```javascript
+output: {
+  //...
+  assetModuleFilename: "img/abc.png",
+},
+```
+
+【方式2】在对应module.rule中通过`**generator**`进行配置，推荐这种方式，可以自定义文件展示名称以及输出目录
+
+```javascript
+module.exports = {
+  //...
+  module: {
+      {
+        test: /\.(png|jpe?g|gif)$/,
+        type: "asset",
+        parser: {
+          dataUrlCondition: {
+            maxSize: 3 * 1024,
+          },
+        },
+        // type: "asset/resource",
+        // type: "asset/inline",
+        generator: {
+          // [name]为文件原始名称的占位符
+          // [ext]为文件后缀的占位符
+          filename: "img/[name]_[hash:8][ext]",
+        },
+      },
+    ],
+  },
+};
+```
 
 ## 6、解决路径问题
 
@@ -585,11 +824,51 @@ new webpack.DefinePlugin({
 
 ![img](https://cdn.nlark.com/yuque/0/2025/png/22253064/1736924677823-7e8796aa-87ae-4919-90d1-48f58f02cc3b.png)
 
-注意：属性值需要是字符串，被解析时将会解析成这个字符串的值
+注意：属性值需要是字符串，被解析时将会解析成这个字符串的值。也就是说字符串中的内容会被拿到`eval`中执行，比如`ABC: "1+1"`，最终解析出来`ABC: 2`
+
+- **所以如果想让后面的内容作为字符串，可以**`**"'我是字符串'"**`**或者**`**`"我是字符串"`**`**这样来配置**
 
 这样一来，在源码中，我们可以直接使用插件中提供的常量，当webpack编译完成后，会自动替换为常量的值
 
 ![img](https://cdn.nlark.com/yuque/0/2025/png/22253064/1736924655714-88304bfb-7b27-48a8-bca1-7c137ed9b512.png)
+
+在vue中的index.html是这样的：
+
+```html
+<!DOCTYPE html>
+<html lang="">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <link rel="icon" href="<%= BASE_URL %>favicon.ico">
+    <title><%= htmlWebpackPlugin.options.title %></title>
+  </head>
+  <body>
+    <noscript>
+      <strong>We're sorry but <%= htmlWebpackPlugin.options.title %> doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
+    </noscript>
+    <div id="app"></div>
+    <!-- built files will be auto injected -->
+  </body>
+</html>
+```
+
+可见，其中使用到了一个`**BASE_URL**`**，所以需要通过DefinePlugin去注入BASE_URL，不然找不到这个内容打包就会失败：**
+
+```javascript
+const { DefinePlugin } = require("webpack")
+
+module.exports = {
+  //...
+  plugins: [
+   //...
+    new DefinePlugin({
+      BASE_URL: "'./'"
+    })
+  ]
+}
+```
 
 ### BannerPlugin
 

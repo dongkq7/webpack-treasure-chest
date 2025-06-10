@@ -50,7 +50,7 @@ module.exports = env => {
 
 在调用webpack函数时，webpack会向函数传入一个参数env，**该参数的值来自于webpack命令中给env指定的值**，例如
 
-```plain
+```bash
 npx webpack --env abc # env: {abc:true}
 npx webpack --env abc=1  # env： {abc:'1'}
 npx webpack --env abc=1 --env bcd=2 # env: {abc:'1', bcd:'2'}
@@ -99,4 +99,49 @@ module.exports = env => {
     "build": "webpack --env prod",
     "dev": "webpack --env dev"
   },
+```
+
+## 方案三
+
+一般将配置抽取到不同的配置文件中，然后通过`webpack-merge`插件中的`merge对配置文件进行合并`
+
+```bash
+npm i webpack-merge -D
+```
+
+webpack.base.js:
+
+```javascript
+module.exports = {
+  entry: "./src/index.js",
+  output: {
+    filename: "scripts/[name]-[fullhash:6].js",
+    clean: true,
+  },
+};
+```
+
+webpack.dev.js:
+
+```javascript
+const baseConfig = require("./webpack.base");
+const { merge } = require("webpack-merge");
+
+module.exports = merge(baseConfig, {
+  mode: "development",
+  devtool: "source-map",
+  watch: true,
+});
+```
+
+webpack.prod.js:
+
+```javascript
+const baseConfig = require("./webpack.base");
+const { merge } = require("webpack-merge");
+
+module.exports = merge(baseConfig, {
+  mode: "production",
+  devtool: false,
+});
 ```

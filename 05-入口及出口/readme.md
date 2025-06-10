@@ -60,6 +60,26 @@ output: {
 
 ![img](https://cdn.nlark.com/yuque/0/2025/png/22253064/1749180077314-18c89b81-81d9-470d-a1e5-28d5f987b4ff.png)
 
+### 补充说明
+
+需要注意，entry路径默认是相对于项目启动路径的，也就是`process.cwd()`
+
+实际上与`context`（上下文）配置项有关
+
+**context的作用是用于解析入口（entry point）和加载器（loader）**
+
+```javascript
+import path from "node:path";
+export default {
+  mode: "development",
+  context: path.resolve(import.meta.dirname, "./"),
+  entry: {
+    main: "./src/index.js", // 属性名 chunk名称，属性值chunk对应的入口模块路径
+  }
+  //..
+}
+```
+
 ## 出口
 
 这里的出口是针对**资源列表的文件名或路径**的配置
@@ -354,4 +374,4 @@ export default {
 ```
 
 - import path时通过`import path from 'path'`或者`import path from 'node:path'`
-- `__dirname`改成`**import.meta.dirname**`
+- `__dirname`改成`import.meta.dirname`
