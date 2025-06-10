@@ -151,6 +151,50 @@ webpack5后增加了`clean: true`，该配置项可以在打包时清除上一�
 
 在webpack5以前，要通过`clean-webpack-plugin`插件来实现。
 
+### chunkFilename
+
+如果模块中使用到了动态引入，此时，动态引入的模块会被单独拆分出一个chunk，此时如果想指定该chunk命名规则，通过`**output.chunkFilename**`
+
+比如：
+
+**src/index.js：**
+
+```javascript
+if (Math.random() < 0.5) {
+  import("./a.js").then((module) => {
+    console.log(module.sum(1, 2));
+  });
+}
+```
+
+**src/a.js：**
+
+```javascript
+export function sum(a, b) {
+  console.log(a + b);
+}
+```
+
+**webpack.config.js:**
+
+```javascript
+import path from "node:path";
+export default {
+  mode: "development",
+  entry: {
+    main: "./src/index.js", // 属性名 chunk名称，属性值chunk对应的入口模块路径
+  },
+  output: {
+    path: path.resolve(import.meta.dirname, "target"),
+    filename: "[name][fullhash:8].js",
+    chunkFilename: "[name][contenthash:8].js",
+    clean: true,
+  },
+};
+```
+
+![img](https://cdn.nlark.com/yuque/0/2025/png/22253064/1749196119569-47e76ca4-51b0-4811-b0e3-4802c3337c95.png)
+
 ## 入口出口最佳实践
 
 ### 一个页面一个JS

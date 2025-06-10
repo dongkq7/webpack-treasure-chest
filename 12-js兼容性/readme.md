@@ -269,3 +269,5 @@ npm install -D babel-loader @babel/core @babel/preset-env
 
 1. 配置.babelrc与.browswerslistrc供babel预设读取
 2. 根据具体情况来安装一些额外的包，比如core-js等
+
+需要注意，插件的配置和预设的配置是区分开的，插件使用`plugins`来配置，预设使用`presets`来配置

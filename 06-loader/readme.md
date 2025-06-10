@@ -3,11 +3,13 @@ webpack做的事情，仅仅是分析出各种模块的依赖关系，然后形�
 
 ## 什么是loader
 
-**webpack loader**： loader本质上是一个函数，它的作用是将某个源码字符串转换成另一个源码字符串返回。
+**webpack loader**： loader本质上是一个函数，它的作用是**将某个源码字符串转换成另一个源码字符串返回。**
 
 ![null](assets/2020-01-13-10-39-24.png)![img](https://cdn.nlark.com/yuque/0/2025/png/22253064/1736733426643-26fe26ec-1e97-47b8-818a-e0851ba7598f.png)
 
-loader函数的将在模块解析的过程中被调用，以得到最终的源码。
+loader函数的将**在模块解析的过程中被调用**，以得到最终的源码。
+
+- loader本质就是用来做**编译的增强**
 
 **全流程：**
 
@@ -28,6 +30,19 @@ loader函数的将在模块解析的过程中被调用，以得到最终的源�
 ![img](https://cdn.nlark.com/yuque/0/2025/png/22253064/1736733461328-46c286bb-bd02-4ccf-8230-ed5b031e9774.png)![null](assets/2020-01-13-10-29-54.png)
 
 ## loader相关配置
+
+rules属性对应的值是一个数组：**[Rule] ,**数组中存放的是一个个的Rule，Rule是一个对象，对象中可以设置多个属性： 
+
+- **test**：用于对 resource（资源）进行匹配的，通常会设置成正则表达式
+- **use**：对应的值时一个数组：**[UseEntry]**  UseEntry是一个对象，可以通过对象的属性来设置一些其他属性 
+
+-  loader：必须有一个 loader属性，对应的值是一个字符串
+-  options：可选的属性，**值是一个字符串或者对象**，值会被传入到loader中
+- query：目前已经使用options来替代
+
+- **loader**： Rule.use: [ { loader } ] 的简写
+
+**传递字符串（如：use: [ 'style-loader' ]）是 loader 属性的简写方式（如：use: [ { loader: 'style-loader'} ]）**
 
 **完整配置**
 
@@ -60,6 +75,21 @@ module.exports = {
             { //每个规则是一个对象
                 test: /\.js$/, //匹配的模块正则
                 use: ["loader路径1", "loader路径2"]//loader的路径，该字符串会被放置到require中
+            }
+        ]
+    }
+}
+```
+
+**如果只有一个loader可以不用use，直接使用loader:**
+
+```javascript
+module.exports = {
+    module: { //针对模块的配置，目前版本只有两个配置，rules、noParse
+        rules: [ //模块匹配规则，可以存在多个规则
+            { //每个规则是一个对象
+                test: /\.js$/, //匹配的模块正则
+                loader: "loader路径"
             }
         ]
     }
@@ -372,3 +402,191 @@ function getFilePath(buffer, name) {
 ## 注意
 
 由于loader是在webpack打包过程中用到的，所以loader中只能使用cjs，不能使用esmodule。
+
+
+
+## 常用loader汇总
+
+- js `babel-loader`
+- ts `babel-loader + preset-typescript`或`ts-loader`
+- image `raw-loader`、`file-loader`(现不推荐使用)、`url-loader`
+- css `css-loader+style-loader+postcss`
+
+
+
+## webpack5中如何处理图片
+
+- 在webpack5之前，加载这些资源需要使用一些loader，比如raw-loader 、url-loader、file-loader
+- 在webpack5开始，可以直接使用资源模块类型（**asset module type**），来替代上面的这些loader
+
+### 资源模块类型(asset module type)
+
+通过添加 4 种新的模块类型，来替换所有这些 loader： 
+
+- **asset/resource** 发送一个单独的文件并导出 URL，之前通过使用 file-loader 实现
+- **asset/inline** 导出一个资源的 data URI，之前通过使用 url-loader 实现
+- **asset** 在导出一个 data URI 和发送一个单独的文件之间自动选择，之前通过使用 url-loader，并且配置资源体积限制实现
+- **asset/source** 导出资源的源代码，之前通过使用 raw-loader 实现（较少使用，因为一般不会自己去对图片的二进制进行解码）
+
+### 示例
+
+#### 1、type: **asset**
+
+**webpack.img.js:**
+
+```javascript
+const path = require("path");
+module.exports = {
+  entry: "./src/buildImg.js",
+  output: {
+    path: path.resolve(__dirname, "build"),
+    filename: "bundle.js",
+  },
+  module: {
+    rules: [
+      {
+        test: /\.(png|jpe?g|gif)$/,
+        type: "asset",
+      },
+      {
+        test: /\.css$/,
+        use: ["style-loader", "css-loader"],
+      },
+    ],
+  },
+};
+```
+
+**src/buildImg.js:**
+
+```javascript
+import src from "./assets/webpack.png";
+// 将css加入到webpack依赖图中
+import "./css/index.css";
+var img = document.createElement("img");
+img.src = src;
+document.body.append(img);
+
+var div = document.createElement("div");
+document.body.append(div);
+```
+
+**index.html**
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body></body>
+  <script src="./build/bundle.js"></script>
+</html>
+```
+
+执行`pnpm run img`此时在打包结果中可以看到，将这个图片转换成了base64:
+
+![img](https://cdn.nlark.com/yuque/0/2025/png/22253064/1749521410338-301f95f7-a695-467f-99f8-056ef5e96c09.png)
+
+![img](https://cdn.nlark.com/yuque/0/2025/png/22253064/1749521444155-90af9d7b-37a9-4463-ae05-6762235bf042.png)
+
+#### 2、type: **asset/resource**
+
+```javascript
+module.exports = {
+  //...
+  module: {
+    rules: [
+      {
+        test: /\.(png|jpe?g|gif)$/,
+        // type: "asset",
+        type: "asset/resource",
+      },
+      //...
+    ],
+  },
+};
+```
+
+可见，会将资源图片打包输出到目录，然后再将图片对应的资源路径的url给到使用到图片的地方（img的src或者背景图）
+
+![img](https://cdn.nlark.com/yuque/0/2025/png/22253064/1749521546191-b1309dda-a7c2-47e9-822a-a504bfe7f68f.png)
+
+![img](https://cdn.nlark.com/yuque/0/2025/png/22253064/1749521584017-bb247061-dd85-42e6-ad52-baa2d49959a3.png)
+
+#### 3、type: **asset/inline**
+
+会将转成base64
+
+这样的优势：会少发几次网络请求（不需要额外请求图片了）
+
+这样的缺点：js文件会变得很大，造成下载js和解析js时间过长
+
+怎样合理呢？一般会这样处理：
+
+- 对于体积小的图片，可以转换为base64
+- 对于体积大的图片，进行单独打包处理，再去请求打包后对应的资源的url
+
+#### 3、type: **asset 的配置**
+
+经过对type:asset配置，可以达到url-loader配置limit的效果：
+
+```javascript
+module.exports = {
+  //...
+  module: {
+    rules: [
+      {
+        test: /\.(png|jpe?g|gif)$/,
+        type: "asset",
+        parser: {
+          dataUrlCondition: {
+            maxSize: 10 * 1024,
+          },
+        },
+      },
+      //...
+    ],
+  },
+};
+```
+
+### 配置静态资源的名称
+
+【方式1】在output配置项中通过`**assetModuleFilename**`进行配置，但是这种只适合只有一个静态资源的情况
+
+```javascript
+output: {
+  //...
+  assetModuleFilename: "img/abc.png",
+},
+```
+
+【方式2】在对应module.rule中通过`**generator**`进行配置，推荐这种方式，可以自定义文件展示名称以及输出目录
+
+```javascript
+module.exports = {
+  //...
+  module: {
+      {
+        test: /\.(png|jpe?g|gif)$/,
+        type: "asset",
+        parser: {
+          dataUrlCondition: {
+            maxSize: 3 * 1024,
+          },
+        },
+        // type: "asset/resource",
+        // type: "asset/inline",
+        generator: {
+          // [name]为文件原始名称的占位符
+          // [ext]为文件后缀的占位符
+          filename: "img/[name]_[hash:8][ext]",
+        },
+      },
+    ],
+  },
+};
+```
