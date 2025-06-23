@@ -1,0 +1,30 @@
+{
+  "name": "16-代码压缩与TreeShaking详解",
+  "sideEffects": [
+    "./src/utils/other.js",
+    "*.css"
+  ],
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.6.5",
+  "devDependencies": {
+    "compression-webpack-plugin": "^11.1.0",
+    "css-loader": "^7.1.2",
+    "css-minimizer-webpack-plugin": "^7.0.2",
+    "glob": "^11.0.3",
+    "html-webpack-plugin": "^5.6.3",
+    "mini-css-extract-plugin": "^2.9.2",
+    "purgecss-webpack-plugin": "^7.0.2",
+    "speed-measure-webpack-plugin": "^1.5.0",
+    "webpack": "^5.99.9",
+    "webpack-bundle-analyzer": "^4.10.2",
+    "webpack-cli": "^6.0.1"
+  }
+}
