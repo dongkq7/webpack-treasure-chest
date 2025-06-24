@@ -1,0 +1,23 @@
+{
+  "name": "17-md-loader",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.6.5",
+  "devDependencies": {
+    "css-loader": "^7.1.2",
+    "highlight.js": "^11.11.1",
+    "html-webpack-plugin": "^5.6.3",
+    "marked": "^15.0.12",
+    "style-loader": "^4.0.0",
+    "webpack": "^5.99.9",
+    "webpack-cli": "^6.0.1"
+  }
+}
