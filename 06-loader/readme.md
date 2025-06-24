@@ -1,9 +1,11 @@
 webpack做的事情，仅仅是分析出各种模块的依赖关系，然后形成资源列表，最终打包生成到指定的文件中。
 更多的功能需要借助webpack loaders和webpack plugins完成。
 
-## 什么是loader
+## 1、什么是loader
 
-**webpack loader**： loader本质上是一个函数，它的作用是**将某个源码字符串转换成另一个源码字符串返回。**
+**webpack loader**： loader本质上是一个函数（或者说是一个导出为函数的JavaScript模块），它的作用是**将某个源码字符串转换成另一个源码字符串返回。**
+
+- loader runner库会调用这个函数，然后将上一个loader产生的结果或者资源文件传入进去
 
 ![null](assets/2020-01-13-10-39-24.png)![img](https://cdn.nlark.com/yuque/0/2025/png/22253064/1736733426643-26fe26ec-1e97-47b8-818a-e0851ba7598f.png)
 
@@ -29,7 +31,7 @@ loader函数的将**在模块解析的过程中被调用**，以得到最终的�
 
 ![img](https://cdn.nlark.com/yuque/0/2025/png/22253064/1736733461328-46c286bb-bd02-4ccf-8230-ed5b031e9774.png)![null](assets/2020-01-13-10-29-54.png)
 
-## loader相关配置
+## 2、loader相关配置
 
 rules属性对应的值是一个数组：**[Rule] ,**数组中存放的是一个个的Rule，Rule是一个对象，对象中可以设置多个属性： 
 
@@ -96,7 +98,7 @@ module.exports = {
 }
 ```
 
-### 试着写一个loader
+## 3、试着写一个loader
 
 假设index.js为：
 
@@ -123,9 +125,70 @@ module.exports = function(sourceCode) {
 
 可见，处理后，变量会被替换为var，最终可以成功打包。
 
+### 补充
+
+1. loader的函数会接收三个参数：
+
+1. `sourceCode` 资源文件的内容
+2. `map` sourcemap相关的数据
+3. `meta`一些元数据
+
+1. 自定义的loader也可以接收传递的参数，也是通过options去传递。早期在loader中需要通过loader-utils库来获取（webpack开发的），现在可以直接通过`this.getOptions()`来获取。
+
+![img](https://cdn.nlark.com/yuque/0/2025/png/22253064/1750733622698-5ac195a5-fd1b-452e-be6e-a412bda62fc7.png)
+
+```javascript
+module.exports = function(sourceCode) {
+  const options = this.getOptions()
+  console.log('loader1', options) // { a: 1, b: 2 }
+  return sourceCode
+}
+```
+
+1. 如果想要对传递过来的参数进行校验，就需要使用到官方提供的`schema-utils`库来进行：
+
+```bash
+npm i schema-utils -D
+```
+
+创建对应的json文件对传入的参数进行校验规则的描述：
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "a": {
+      "type": "number",
+      "description": "a的值需要为数字"
+    },
+    "b": {
+      "type": "number",
+      "description": "b的值需要为数字"
+    }
+  }
+}
+```
+
+使用validate函数对参数进行校验
+
+```javascript
+const { validate } = require('schema-utils')
+const schema = require('./schema/loader-schema.json')
 
 
-### 多个loader的执行顺序
+module.exports = function(sourceCode) {
+  const options = this.getOptions()
+  validate(schema, options)
+  console.log('loader1', options) // { a: 1, b: 2 }
+  return sourceCode
+}
+```
+
+如果校验不符合规则，则会打印出description对应的信息：
+
+![img](https://cdn.nlark.com/yuque/0/2025/png/22253064/1750734003586-f4aa8f85-7080-4886-9848-7b1393931fa4.png)
+
+## 4、多个loader的执行顺序
 
 ```javascript
 module.exports = {
@@ -198,7 +261,53 @@ loader在执行过程中会按照从后往前的顺序，先把sourceCode交给l
 
 ![img](https://cdn.nlark.com/yuque/0/2025/png/22253064/1736739658725-ab83ead0-1805-46c5-bde2-e829804e8f61.png)
 
-## loader处理样式
+### 补充
+
+1. 在使用loader时，webpack会默认去node_modules下去找对应的loader，如果想使用自定义loader并告诉webpack去对应目录下去寻找，不需要以路径的方式去书写，那么此时就需要使用`resolveLoader`配置项：
+
+```javascript
+const path = require("path")
+
+module.exports = {
+  mode: "development",
+  resolveLoader: {
+    // 告诉webpack去当前目录的loaders目录下去找自定义的loader
+    modules: [path.resolve(__dirname, "loaders")],
+  },
+  module: {
+    rules: [
+      {
+        test: /index\.js/,
+        use: ["loader1", "loader2"],
+      },
+      {
+        test: /\.js$/,
+        use: ["loader3", "loader4"],
+      },
+      {
+        test: /\.css$/,
+        use: ["css-loader"],
+      },
+      {
+        test: /\.(png|jpe?g|gif)$/,
+        use: [
+          {
+            loader: "img-loader",
+            options: {
+              limit: 3000,
+              filename: "img-[contenthash:6].[ext]",
+            },
+          },
+        ],
+      },
+    ],
+  },
+};
+```
+
+1. 如果想改变loader的执行顺序，可以通过属性`enforce: "pre"`或者`enforce: "post"`来改变
+
+## 5、loader处理样式
 
 如果模块中依赖样式代码，比如在index.js中依赖index.css文件，在index.js中使用require引入了index.css：
 
@@ -247,7 +356,7 @@ module.exports = function(sourceCode) {
 }
 ```
 
-## loader处理图片
+## 6、loader处理图片
 
 比如想在页面上通过js的方式展示一张图片
 
@@ -399,22 +508,9 @@ function getFilePath(buffer, name) {
 }
 ```
 
-## 注意
-
-由于loader是在webpack打包过程中用到的，所以loader中只能使用cjs，不能使用esmodule。
 
 
-
-## 常用loader汇总
-
-- js `babel-loader`
-- ts `babel-loader + preset-typescript`或`ts-loader`
-- image `raw-loader`、`file-loader`(现不推荐使用)、`url-loader`
-- css `css-loader+style-loader+postcss`
-
-
-
-## webpack5中如何处理图片
+## 7、webpack5中如何处理图片
 
 - 在webpack5之前，加载这些资源需要使用一些loader，比如raw-loader 、url-loader、file-loader
 - 在webpack5开始，可以直接使用资源模块类型（**asset module type**），来替代上面的这些loader
@@ -590,3 +686,45 @@ module.exports = {
   },
 };
 ```
+
+## 8、同步loader与异步loader
+
+上面编写的自定义loader是同步loader，可以立即返回内容。
+
+实际上也可以通过callback函数来返回内容，第一个参数为错误信息，没有则传递null，第二个参数为处理后的sourceCode:
+
+```javascript
+module.exports = function(sourceCode) {
+  const callback = this.callback
+  // 处理逻辑...
+  callback(null, sourceCode)
+}
+```
+
+有时候loader中要执行一些耗时操作，不能立即返回内容，此时需要使用到`this.async()`返回的函数来处理
+
+- 第一个参数为错误信息
+- 第二个参数为处理后的sourceCode
+
+```javascript
+module.exports = function(sourceCode) {
+  const callback = this.async()
+  setTimeout(() => {
+    //...处理逻辑
+    callback(null, sourceCode)
+  }, 2000)
+}
+```
+
+## 9、常用loader汇总
+
+- js `babel-loader`
+- ts `babel-loader + preset-typescript`或`ts-loader`
+- image `raw-loader`、`file-loader`(现不推荐使用)、`url-loader`
+- css `css-loader+style-loader+postcss`
+
+
+
+## 注意
+
+由于loader是在webpack打包过程中用到的，所以loader中只能使用cjs，不能使用esmodule。

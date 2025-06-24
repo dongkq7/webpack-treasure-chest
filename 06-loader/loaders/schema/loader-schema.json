@@ -1,0 +1,13 @@
+{
+  "type": "object",
+  "properties": {
+    "a": {
+      "type": "number",
+      "description": "a的值需要为数字"
+    },
+    "b": {
+      "type": "number",
+      "description": "b的值需要为数字"
+    }
+  }
+}

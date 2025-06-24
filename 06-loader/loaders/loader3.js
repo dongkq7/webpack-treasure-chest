@@ -1,4 +1,7 @@
 module.exports = function(sourceCode) {
-  console.log('loader3')
-  return sourceCode
+  const callback = this.async()
+  setTimeout(() => {
+    console.log('loader3')
+    callback(null, sourceCode)
+  }, 2000)
 }
